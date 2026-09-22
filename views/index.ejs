@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <title>Socket.IO chat</title>
+    <style>
+    
+  body {
+    margin: 0;
+    padding: 0;
+    background: #f4f6f9;
+    font-family: "Segoe UI", Roboto, Arial, sans-serif;
+  }
+
+  h1 {
+    text-align: center;
+    margin-top: 20px;
+    font-weight: 600;
+    color: #333;
+  }
+
+  /* LOGIN BOX */
+  #login {
+    width: 320px;
+    margin: 120px auto;
+    padding: 25px;
+    background: white;
+    box-shadow: 0 0 15px rgba(0,0,0,0.1);
+    border-radius: 10px;
+    text-align: center;
+  }
+
+  #login input {
+    width: 90%;
+    padding: 10px;
+    margin-bottom: 12px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    outline: none;
+    font-size: 15px;
+  }
+
+  #login button {
+    padding: 10px 20px;
+    background: #4f46e5;
+    border: none;
+    color: white;
+    font-size: 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    width: 95%;
+  }
+
+  #login button:hover {
+    background: #3d35c8;
+  }
+
+  /* CHAT SECTION LAYOUT */
+  #chat {
+    width: 90%;
+    max-width: 900px;
+    margin: 20px auto;
+    background: white;
+    padding: 20px;
+    box-shadow: 0 0 15px rgba(0,0,0,0.08);
+    border-radius: 15px;
+  }
+
+  #allusers {
+    color: #444;
+    font-weight: bold;
+  }
+
+  /* PRIVATE + GROUP MESSAGE BOXES */
+  #privatemsg, #groupMsg {
+    margin-top: 20px;
+    padding: 15px;
+    background: #f8f9ff;
+    border-left: 4px solid #4f46e5;
+    border-radius: 10px;
+  }
+
+  input[type="text"] {
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    margin-right: 10px;
+    margin-bottom: 10px;
+    width: 200px;
+    font-size: 14px;
+  }
+
+  button {
+    background: #4f46e5;
+    border: none;
+    color: white;
+    padding: 8px 18px;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+
+  button:hover {
+    background: #3b33c0;
+  }
+
+  /* MESSAGE LIST */
+  ul {
+    list-style: none;
+    padding: 0;
+  }
+
+  ul li {
+    background: #eef0ff;
+    padding: 10px 15px;
+    margin-bottom: 10px;
+    border-radius: 8px;
+    font-size: 15px;
+    color: #333;
+    width: fit-content;
+    max-width: 80%;
+    animation: fadeIn 0.2s ease-in-out;
+  }
+
+  /* Nice animation */
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+</style>
+
+    
+  </head>
+  <body>
+   
+    <h1>chat app</h1>
+    <div id="login">
+    <input type="text" placeholder="username" id="username" />
+    <button onclick="joining()">join</button>
+    </div>
+    <div id="chat" style="display: none;">
+      <h1 id="userkanaam"></h1>
+<h1>chat section</h1>
+<h3>users joined:- <span id="allusers"></span></h3>
+<ul id="messag"></ul>
+<h3>privately msg to</h3>
+<input type="text" placeholder="to" id="messageTo" />
+<input type="text" placeholder="messsage" id="sendmsg" />
+<button onclick="bhjdiya()">send</button>
+<div id="privatemsg">
+  <ul id="pvttext"></ul>
+</div>
+<div id="groupMsg">
+  <h3>Group message:-</h3>
+  <input type="text" id="groupmsg">
+  <button onclick="groupmessage()">send</button>
+  <div id="grouppmsg">
+  <ul id="groupptext"></ul>
+</div>
+</div>
+    </div>
+  </body>
+  <script src="/socket.io/socket.io.js"></script>
+<script>
+  let username="";
+  const socket = io();
+   const form = document.getElementById('form');
+  const input = document.getElementById('input');
+   const messages = document.getElementById('pvttext');
+   const grpmessages = document.getElementById('groupptext');
+   socket.on("users",(data)=>{
+    console.log(data)
+    document.getElementById("allusers").textContent=data;
+    document.getElementById("userkanaam").textContent="User :- "+ username;
+   })
+   function joining(){
+    document.getElementById("chat").style.display="block"
+    const hiding=document.getElementById("login");
+const name=document.getElementById("username")
+    hiding.style.display="none";
+    username=name.value;
+    console.log(username);
+    socket.emit("joining",username)
+   }
+   function bhjdiya(){
+     
+    const pvtuser=document.getElementById("messageTo").value
+    const msg=document.getElementById("sendmsg").value
+    socket.emit("privately",username,pvtuser,msg)
+      document.getElementById("sendmsg").value = "";
+    console.log(`Message sent to ${pvtuser}: ${msg}`);
+   }
+   function groupmessage(){
+    const msg=document.getElementById("groupmsg").value;
+    socket.emit("groupmsg",username,msg);
+    document.getElementById("groupmsg").value="";
+    console.log("group message sent")
+
+
+   }
+
+  // form.addEventListener('submit', (e) => {
+  //   e.preventDefault();
+  //   if (input.value) {
+  //     socket.emit('chat message', input.value);
+  //     input.value = '';
+  //   }
+  // });
+ 
+   socket.on('privately', (sender,msg,usr) => {
+    if(usr===username||username==sender){
+    console.log(msg);
+    const item = document.createElement('li');
+    item.textContent = "a message from "+sender+" : "+msg;
+    messages.appendChild(item);
+    window.scrollTo(0, document.body.scrollHeight);
+    }
+  });
+
+     socket.on("groupmsg",(user,msg)=>{
+      if(username!=user){
+const item = document.createElement('li');
+    item.textContent = "a message from "+user+" : "+msg;
+    grpmessages.appendChild(item);
+    window.scrollTo(0, document.body.scrollHeight);
+      }
+      else {
+        const item = document.createElement('li');
+    item.textContent = "a message from you : "+msg;
+    grpmessages.appendChild(item);
+    window.scrollTo(0, document.body.scrollHeight);
+      }
+    })
+</script>
+</html>
